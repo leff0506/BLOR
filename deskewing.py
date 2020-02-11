@@ -5,6 +5,9 @@ import json
 import base64
 import requests
 
+res_w = 1600
+res_h = 2300
+
 
 def deskewing(origin, to):
     image = cv2.imread(origin)
@@ -48,15 +51,19 @@ def deskewing(origin, to):
     while min(gray[y2, :]) == 255:
         y2 -= 1
     rotated = rotated[y1:y2 + 1, x1:x2 + 1]
-    res_w = 1600
-    res_h = 2300
+
     rotated = cv2.resize(rotated, (res_w, res_h), interpolation=cv2.INTER_AREA)
     cv2.imwrite(to, rotated)
+    return angle
+
+
 def read_json(origin):
     with open(origin) as json_file:
         data = json.load(json_file)
     return data
-def crop(origin,origin_data):
+
+
+def crop(origin, origin_data):
     data = origin_data
     data = data['responses'][0]['textAnnotations']
     x1 = 1e5
@@ -65,36 +72,38 @@ def crop(origin,origin_data):
     y2 = 0
     for i in range(len(data)):
         for point in data[i]['boundingPoly']['vertices']:
-            x1 = min(x1,point.get('x',1e7))
-            x2 = max(x2,point.get('x',0))
-            y1 = min(y1,point.get('y',1e7))
-            y2 = max(y2,point.get('y',0))
+            x1 = min(x1, point.get('x', 1e7))
+            x2 = max(x2, point.get('x', 0))
+            y1 = min(y1, point.get('y', 1e7))
+            y2 = max(y2, point.get('y', 0))
     shift = 5
     image = cv2.imread(origin)
     (h, w) = image.shape[:2]
-    x1 = max(0,x1-shift)
-    x2 = min(w,x2+shift)
-    y1 = max(0,y1-shift)
-    y2 = min(h,y2+shift)
-    image = image[y1:y2+1,x1:x2+1]
-    res_w = 1600
-    res_h = 2300
-    cv2.imwrite(origin,image)
-    deskewing(origin,origin)
+    x1 = max(0, x1 - shift)
+    x2 = min(w, x2 + shift)
+    y1 = max(0, y1 - shift)
+    y2 = min(h, y2 + shift)
+    image = image[y1:y2 + 1, x1:x2 + 1]
+    cv2.imwrite(origin, image)
+    deskewing(origin, origin)
+
+
 def detect_text(origin):
     url = 'https://vision.googleapis.com/v1/images:annotate?alt=json&key=AIzaSyAwy6okZ-wrLFCehajOsN8S9fn_4d3eoWI'
     with open(origin, "rb") as img_file:
-        base= base64.b64encode(img_file.read())
+        base = base64.b64encode(img_file.read())
         base = base.decode('utf-8')
     req = '{"requests": [{"image": {"content":"'
     req += base
-    req +='"},"features": [{"type": "TEXT_DETECTION","model": "builtin/latest"}],"imageContext": {"languageHints": "en"}}]}'
+    req += '"},"features": [{"type": "TEXT_DETECTION","model": "builtin/latest"}],"imageContext": {"languageHints": "en"}}]}'
     headers = {'Content-type': 'application/json',
-               'Accept': 'text/plain',}
+               'Accept': 'text/plain', }
     answer = requests.post(url, data=req, headers=headers)
     answer = answer.json()
     return answer
+
+
 def normalize(origin, dest):
-    deskewing(origin,dest)
-    crop(dest,detect_text(dest))
-    deskewing(dest,dest)
+    angle = deskewing(origin, dest)
+    crop(dest, detect_text(dest))
+    return {"height": res_h, "width": res_w, "angle": angle}

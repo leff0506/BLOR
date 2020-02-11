@@ -416,7 +416,8 @@ def get_lines(rects, labels):
 
 def self_recorded(origin, dest):
     print("start :", origin)
-    rects = filt(json_to_rects(detect_text(origin)))
+    origin_text = detect_text(origin)
+    rects = filt(json_to_rects(origin_text))
     X = dict_to_np(rects)
     labels = result_dfs(rects, 20, 0)
     lines = get_lines(rects, labels)
@@ -425,9 +426,10 @@ def self_recorded(origin, dest):
     # draw_lines(origin, lines[0], lines[1])
     #     print(type(rects))
     # 25 15
-    result_claster(X,result_dfs(rects,25,15,lines[0],lines[1]),origin,rects,save = dest)
-    print("end :", origin)
+    labels = result_dfs(rects,25,15,lines[0],lines[1])
 
+    print("end :", origin)
+    return [labels,rects,origin_text]
 
 def draw_lines(photo, vert, hor):
     import matplotlib.pyplot as plt
@@ -446,16 +448,16 @@ def draw_lines(photo, vert, hor):
     plt.show()
 
 
-import os
+# import os
 
 # directory = './test/samples'
 # dest = "./test/norm/"
 # for filename in os.listdir(directory):
 #     desk.normalize(directory+"/"+filename,dest+filename)
-directory = "./test/norm"
-dest = "./test/self_recorded/"
-for filename in os.listdir(directory):
-    self_recorded(directory+"/"+filename,dest+filename)
+# directory = "./test/norm"
+# dest = "./test/self_recorded/"
+# for filename in os.listdir(directory):
+#     self_recorded(directory+"/"+filename,dest+filename)
 # rects = filt(json_to_rects(detect_text("./test/norm/data.png")))
 # for rect in rects:
 #     print(rect)
