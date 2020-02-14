@@ -1,0 +1,5 @@
+WAS_THRESHOLD =3 # создает прямую если находит минимум (value) точек
+WIDTH_FOR_SENTENCES = 20
+HEIGHT_FOR_SENTENCES = 0
+WIDTH_OPTIMAL = 25
+HEIGHT_OPTIMAL = 15

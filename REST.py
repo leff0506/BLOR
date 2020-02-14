@@ -1,14 +1,7 @@
-import base64
-import os
-
-import claster as cl
-import deskewing as desk
-import tempfile
 import json
-import numpy as np
 from flask import Flask, jsonify, request
-import BASE64 as base
-
+import response as resp
+from collections import OrderedDict
 app = Flask(__name__)
 
 tasks = [
@@ -34,29 +27,18 @@ def get_tasks():
 
 @app.route('/todo/api/v1.0', methods=['POST'])
 def req():
-    print(request.json)
     data = json.loads(request.get_json())
     res = []
-    # name = np.random.randint(0,1e8)
-    #
-    # for image in data["images"]:
-    #     print(image)
-    #     name = str(np.random.randint())
-    #     with open(name+".png", "wb") as fh:
-    #         fh.write(base64.decodebytes(image.encode()))
-    #     cl.self_recorded(name+".png",name+"_result")
-
     for image in data["images"]:
-        print(image)
-        name = "./test/REST/got/" + str(np.random.randint(1e8)) + ".png"
-        base.base_to_file(image, name)
-        info = desk.normalize(name, name)
-        body = base.file_to_base(name)
-        os.remove(name)
-        info['body'] = body
-        res.append(info)
-    return jsonify({"images": res})
+        temp = resp.resp(image)
+        res.append(temp)
+    answer = OrderedDict()
+    answer["status"] = "success"
+    answer["data"] = res
+
+    return jsonify(answer)
 
 
 if __name__ == '__main__':
+    app.config['JSON_SORT_KEYS'] = False
     app.run(debug=True)

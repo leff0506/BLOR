@@ -1,8 +1,7 @@
 import requests
-import json
 import numpy as np
 import base64
-import deskewing as desk
+import DB as db
 
 
 def detect_text(origin):
@@ -59,7 +58,7 @@ class rect(object):
             temp += 1
             tempy += p4['y']
 
-        self.center['y'] = tempy / temp;
+        self.center['y'] = tempy / temp
 
     def set_word(self, word):
         self.word = word
@@ -128,6 +127,37 @@ def filt(rects):
             res.append(r)
 
     return res
+
+
+def get_blocks(labels, rects):
+    temp = []
+    n = len(np.unique(labels))
+    text = []
+    union_rects =[]
+    for i in range(n):
+        x1 = 1e7
+        x2 = 0
+        y1 = 1e7
+        y2 = 0
+        temp1 = []
+        temp2 = []
+        for j in range(len(rects)):
+            if labels[j] == i:
+                temp2.append(rects[j])
+                if 'x' in rects[j].p1.keys():
+                    x1 = min(x1, rects[j].p1['x'])
+                if 'x' in rects[j].p2.keys():
+                    x2 = max(x2, rects[j].p2['x'])
+
+                if 'y' in rects[j].p1.keys():
+                    y1 = min(y1, rects[j].p1['y'])
+                if 'y' in rects[j].p3.keys():
+                    y2 = max(y2, rects[j].p3['y'])
+                temp1.append(rects[j].word)
+        text.append(temp1)
+        temp.append(rect({'x': x1, 'y': y1}, {'x': x2, 'y': y1}, {'x': x2, 'y': y2}, {'x': x1, 'y': y2}))
+        union_rects.append(temp2)
+    return [text, temp,union_rects]
 
 
 def result_claster(X, labels, photo, rects, save='claster_res.png'):
@@ -339,7 +369,7 @@ def get_lines(rects, labels):
     has = []
     was = []
     was.append(1)
-    was_treshhold = 3
+    was_treshhold = db.WAS_THRESHOLD
     j = 0
     # print("new", points[0])
     result.append([points[0][0], points[0][1], points[0][1]])
@@ -414,22 +444,23 @@ def get_lines(rects, labels):
     return [union, hor_lines]
 
 
-def self_recorded(origin, dest):
+def self_recorded(origin):
     print("start :", origin)
     origin_text = detect_text(origin)
     rects = filt(json_to_rects(origin_text))
     X = dict_to_np(rects)
-    labels = result_dfs(rects, 20, 0)
+    labels = result_dfs(rects, db.WIDTH_FOR_SENTENCES, db.HEIGHT_FOR_SENTENCES)
     lines = get_lines(rects, labels)
     # lines = []
     lines[1] = []
     # draw_lines(origin, lines[0], lines[1])
     #     print(type(rects))
     # 25 15
-    labels = result_dfs(rects,25,15,lines[0],lines[1])
+    labels = result_dfs(rects, db.WIDTH_OPTIMAL, db.HEIGHT_OPTIMAL, lines[0], lines[1])
 
     print("end :", origin)
-    return [labels,rects,origin_text]
+    return [labels, rects, origin_text]
+
 
 def draw_lines(photo, vert, hor):
     import matplotlib.pyplot as plt
@@ -446,7 +477,6 @@ def draw_lines(photo, vert, hor):
         # x_values = [hor[i][1], hor[i][2]]
         # plt.plot(x_values, y_values, c=col[i % len(col)], linewidth=3)
     plt.show()
-
 
 # import os
 
