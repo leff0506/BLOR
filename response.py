@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 def resp(image):
     result = OrderedDict()
-    name = "./test/REST/got/" + str(np.random.randint(1e8)) + ".png"
+    name = "./REST/got/" + str(np.random.randint(1e8)) + ".png"
     base.base_to_file(image, name)
     info = desk.normalize(name, name)
     body = base.file_to_base(name)
